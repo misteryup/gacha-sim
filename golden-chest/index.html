@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Gacha Simulator</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      background: #111827;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      color: #facc15;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      max-width: 1200px;
+      margin: auto;
+      background: #1f2937;
+      padding: 25px;
+      border-radius: 20px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    input {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      width: 120px;
+      font-size: 16px;
+    }
+
+    .gacha-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .gacha-item {
+      background: #374151;
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .gacha-item:hover {
+      transform: scale(1.05);
+    }
+
+    .gacha-icon {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+    }
+
+    .gacha-qty {
+      margin-top: 6px;
+      font-weight: bold;
+      color: #facc15;
+    }
+
+    .gacha-name {
+      margin-top: 4px;
+      font-size: 11px;
+      opacity: 0.7;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .jackpot {
+      border: 2px solid gold;
+      background: linear-gradient(
+        180deg,
+        #78350f,
+        #451a03
+      );
+
+      box-shadow: 0 0 12px gold;
+    }
+    .open-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      padding: 12px 18px;
+      border: none;
+      border-radius: 12px;
+
+      background: linear-gradient(
+        180deg,
+        #facc15,
+        #ca8a04
+      );
+
+      color: #111827;
+      font-weight: bold;
+      font-size: 16px;
+
+      cursor: pointer;
+      transition: 0.2s;
+
+      box-shadow:
+        0 0 12px rgba(250, 204, 21, 0.5);
+    }
+
+    .open-btn:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 0 20px rgba(250, 204, 21, 0.8);
+    }
+
+    .btn-icon {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
+
+    @media (max-width: 900px) {
+      .gacha-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .gacha-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+
+    <h1>Golden Chest Gacha Simulator</h1>
+
+    <p>
+        <p>
+          🎲 Developed for fun by YUP
+        </p>
+
+        <p>
+          This simulator uses published gacha rates from the game and is made only for entertainment & probability awareness.<br>
+          Results here do NOT guarantee real in-game outcomes. Your actual luck can be better... or absolutely destroyed 😭
+        </p>
+
+        <hr>
+
+        <p>
+          🇮🇩 Simulator ini dibuat hanya untuk hiburan dan edukasi probabilitas gacha.<br>
+          Hasil simulasi tidak menjamin hasil sebenarnya di dalam game. Bisa lebih hoki... atau lebih rungkat 😭
+        </p>
+
+        <p>
+          🇬🇧 This simulator is made for entertainment and gacha probability awareness only.<br>
+          Results do not guarantee actual in-game outcomes. Your real luck may be better... or much worse 😭
+        </p>
+
+        <p>
+          🇹🇭 โปรแกรมจำลองกาชานี้จัดทำขึ้นเพื่อความบันเทิงและเพื่อให้เข้าใจเรื่องอัตราสุ่มเท่านั้น<br>
+          ผลลัพธ์ไม่ได้รับประกันว่าจะตรงกับในเกมจริง ดวงจริงของคุณอาจดีกว่า... หรือพังยับกว่าเดิม 😭
+        </p>
+
+        <p>
+          🇯🇵 このガチャシミュレーターは、娯楽および確率理解のために作成されています。<br>
+          シミュレーション結果は実際のゲーム内結果を保証するものではありません。あなたの運はもっと良いかもしれませんし…もっと爆死するかもしれません 😭
+        </p>
+
+        <p>
+          🇵🇭 Ang gacha simulator na ito ay ginawa lamang para sa kasiyahan at para maintindihan ang probability ng gacha.<br>
+          Hindi nito ginagarantiya ang totoong resulta sa loob ng laro. Maaaring mas swerte ka... o mas malas pa 😭
+        </p>
+    </p>
+
+    <div class="controls">
+      <input type="number" id="boxCount" value="35" min="1" />
+      <button onclick="openBoxes()" class="open-btn">
+        <img src="icons/golden-chest.png" class="btn-icon" />
+        OPEN BOX
+      </button>
+    </div>
+
+
+    <div id="result"></div>
+
+  </div>
+
+  <script>
+
+    const items = [
+      { name: "Mythic Costume Selection Box (All-in-one)", chance: 0.05 },
+      { name: "Mythic Costume Selection Box (Separate)", chance: 0.30 },
+      { name: "Tear of Galadriel", chance: 0.35 },
+      { name: "Heart of a Large Pet x2", chance: 1.00 },
+      { name: "Heart of a Large Pet x1", chance: 2.00 },
+      { name: "Heart of a Small Pet x10", chance: 5.00 },
+      { name: "Heroic Baby Food x30", chance: 5.00 },
+      { name: "Equipment Destruction Protection Crystal x2", chance: 3.00 },
+      { name: "Costume Destruction Protection Crystal x1", chance: 3.00 },
+      { name: "Accessory Destruction Protection Crystal x1", chance: 3.00 },
+      { name: "Ooparts Destruction Protection Crystal x1", chance: 3.00 },
+      { name: "Equipment Level Protection Crystal x50", chance: 5.00 },
+      { name: "Costume Level Protection Crystal x25", chance: 5.00 },
+      { name: "Accessory Level Protection Crystal x25", chance: 5.00 },
+      { name: "Ooparts Level Protection Crystal x25", chance: 5.00 },
+      { name: "Appraise Option Lock x4", chance: 2.00 },
+      { name: "Appraise Option Lock x2", chance: 5.00 },
+      { name: "Appraise Ticket x12", chance: 2.00 },
+      { name: "Appraise Ticket x6", chance: 5.00 },
+      { name: "Hero Guarder EXP Scroll x10", chance: 6.00 },
+      { name: "Hero Combo EXP Scroll x10", chance: 6.00 },
+      { name: "Hero Couple EXP Bottle x10", chance: 6.00 },
+      { name: "Pet Pickup Summon Ticket x2", chance: 11.15 },
+      { name: "Costume Pickup Summon Ticket x2", chance: 11.15 },
+    ];
+
+    const itemIcons = {
+      "Mythic Costume Selection Box (All-in-one)": "mythic-all-in-one.png",
+      "Mythic Costume Selection Box (Separate)": "mythic-separate.png",
+      "Tear of Galadriel": "galadriel-tear.png",
+
+      "Heart of a Large Pet x2": "heart-large.png",
+      "Heart of a Large Pet x1": "heart-large.png",
+      "Heart of a Small Pet x10": "heart-small.png",
+
+      "Heroic Baby Food x30": "baby-food.png",
+
+      "Equipment Destruction Protection Crystal x2": "equip-destroy.png",
+      "Costume Destruction Protection Crystal x1": "costume-destroy.png",
+      "Accessory Destruction Protection Crystal x1": "accessory-destroy.png",
+      "Ooparts Destruction Protection Crystal x1": "ooparts-destroy.png",
+
+      "Equipment Level Protection Crystal x50": "equip-level.png",
+      "Costume Level Protection Crystal x25": "costume-level.png",
+      "Accessory Level Protection Crystal x25": "accessory-level.png",
+      "Ooparts Level Protection Crystal x25": "ooparts-level.png",
+
+      "Appraise Option Lock x4": "option-lock.png",
+      "Appraise Option Lock x2": "option-lock.png",
+
+      "Appraise Ticket x12": "ticket.png",
+      "Appraise Ticket x6": "ticket.png",
+
+      "Hero Guarder EXP Scroll x10": "guarder-scroll.png",
+      "Hero Combo EXP Scroll x10": "combo-scroll.png",
+      "Hero Couple EXP Bottle x10": "couple-scroll.png",
+
+      "Pet Pickup Summon Ticket x2": "pet-ticket.png",
+      "Costume Pickup Summon Ticket x2": "costume-ticket.png",
+    };
+
+    function getRandomItem() {
+
+      const rand = Math.random() * 100;
+
+      let cumulative = 0;
+
+      for (const item of items) {
+
+        cumulative += item.chance;
+
+        if (rand <= cumulative) {
+          return item.name;
+        }
+      }
+
+      return items[items.length - 1].name;
+    }
+
+    function openBoxes() {
+
+      const count = parseInt(
+        document.getElementById("boxCount").value
+      );
+
+      const results = {};
+
+      for (let i = 0; i < count; i++) {
+
+        const item = getRandomItem();
+
+        results[item] = (results[item] || 0) + 1;
+      }
+
+      let html = `
+        <h2>Results (${count} Box)</h2>
+        <div class="gacha-grid">
+      `;
+
+      for (const [item, qty] of Object.entries(results)) {
+
+        const isJackpot =
+          item.includes("Mythic") ||
+          item.includes("Tear");
+
+        const icon =
+          itemIcons[item] || "golden-chest.png";
+
+        html += `
+          <div class="gacha-item ${isJackpot ? 'jackpot' : ''}">
+
+            <img
+              src="icons/${icon}"
+              class="gacha-icon"
+            />
+
+            <div class="gacha-qty">
+              x${qty}
+            </div>
+
+            <div class="gacha-name">
+              ${item}
+            </div>
+
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+
+      document.getElementById("result").innerHTML = html;
+    }
+
+  </script>
+
+</body>
+</html>
