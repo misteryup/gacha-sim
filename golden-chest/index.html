@@ -194,7 +194,12 @@
         OPEN BOX
       </button>
     </div>
-
+    <div id="financial-stats" style="margin-bottom: 25px; padding: 20px; background: #1e1b4b; border-radius: 15px; border: 1px solid #4338ca;">
+      <div style="font-size: 13px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px;">Total Investment:</div>
+      <div id="total-usd" style="font-size: 28px; font-weight: bold; color: #fbbf24; margin: 5px 0;">$0.00</div>
+      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
+      <div id="currency-list"></div>
+    </div>
 
     <div id="result"></div>
 
@@ -225,8 +230,8 @@
             { name: "Hero Combo EXP Scroll x10", chance: 6.00 },
             { name: "Hero Couple EXP Bottle x10", chance: 6.00 },
             // Sisa persentase (±20%) dialokasikan ke item yang paling sering muncul
-            { name: "Pet Pickup Summon Ticket x2", chance: 11.15 },
-            { name: "Costume Pickup Summon Ticket x2", chance: 11.15 },
+            { name: "Pet Pickup Summon Ticket x2", chance: 10.15 },
+            { name: "Costume Pickup Summon Ticket x2", chance: 10.15 },
             ];
 
             // Helper untuk mendapatkan angka acak 32-bit yang sangat presisi
@@ -253,54 +258,126 @@
               // Fallback ke item terakhir (biasanya item sampah dengan rate terbesar)
               return items[items.length - 1].name;
             }
+            let totalSpentUSD = 0;
+            let totalBoxOpen  = 0;
+            const PRICE_PER_35_BOX = 79.99;
+            const PRICE_PER_BOX = PRICE_PER_35_BOX / 35;
+
+            // Data kurs awal (Fallback jika API gagal/limit)
+            let rates = {
+                IDR: 17373.777108,
+                MYR: 3.926787,
+                THB: 32.233196,
+                PHP: 60.883695,
+                JPY: 156.310805
+            };
+
+            // Fungsi ambil kurs real-time (Ganti YOUR-API-KEY dengan key gratisanmu)
+            async function updateRates() {
+                try {
+                    const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                    const data = await response.json();
+                    if(data && data.rates) {
+                        rates = {
+                            IDR: data.rates.IDR,
+                            MYR: data.rates.MYR,
+                            THB: data.rates.THB,
+                            PHP: data.rates.PHP,
+                            JPY: data.rates.JPY
+                        };
+                        console.log("Rates updated!", rates);
+                    }
+                } catch (e) {
+                    console.error("Gagal ambil kurs, pakai data fallback.", e);
+                }
+            }
+
+            // Panggil fungsi update saat halaman di-load
+            updateRates();
+
+            function updateFinancialDisplay() {
+                const totalUSD = totalSpentUSD;
+                const totalBox = totalBoxOpen;
+
+                // Update tampilan di HTML
+                document.getElementById("total-usd").innerText = `$${totalUSD.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+                // List konversi untuk mata uang Asia Tenggara + Jepang
+                const conversions = [
+                    { label: "🇮🇩 IDR", value: totalUSD * rates.IDR, locale: "id-ID" },
+                    { label: "🇲🇾 MYR", value: totalUSD * rates.MYR, locale: "ms-MY" },
+                    { label: "🇹🇭 THB", value: totalUSD * rates.THB, locale: "th-TH" },
+                    { label: "🇵🇭 PHP", value: totalUSD * rates.PHP, locale: "en-PH" },
+                    { label: "🇯🇵 JPY", value: totalUSD * rates.JPY, locale: "ja-JP" }
+                ];
+
+                let html = `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; font-size: 12px; opacity: 0.9;">`;
+                    html += `Total Box Open : `+totalBox;
+                conversions.forEach(c => {
+                    html += `<div><strong>${c.label}:</strong> ${c.value.toLocaleString(c.locale, {maximumFractionDigits: 0})}</div>`;
+                });
+                html += `</div>`;
+
+                document.getElementById("currency-list").innerHTML = html;
+            }
 
             function openBoxes() {
-            const btn = document.querySelector('.open-btn');
-            const resultDiv = document.getElementById("result");
-            const count = parseInt(document.getElementById("boxCount").value);
+        // Ambil elemen UI
+        const btn = document.querySelector('.open-btn');
+        const resultDiv = document.getElementById("result");
+        const countInput = document.getElementById("boxCount");
 
-            // Validasi input
-            if (isNaN(count) || count <= 0) return alert("Masukkan jumlah box!");
-            if (count > 1000) return alert("Maksimal 1000 sekali buka agar tidak lag.");
+        // Ambil nilai count (Hanya satu deklarasi di sini)
+        const count = parseInt(countInput.value);
 
-            // Efek Loading agar terasa lebih "berat"
-            btn.disabled = true;
-            resultDiv.innerHTML = "<h2>Opening boxes... Good Luck! 🍀</h2>";
+        // 1. Validasi Input
+        if (isNaN(count) || count <= 0) return alert("Masukkan jumlah box!");
+        if (count > 1000) return alert("Maksimal 1000 sekali buka agar tidak lag.");
 
-            setTimeout(() => {
-              const results = {};
-              for (let i = 0; i < count; i++) {
+        // 2. Update Financial Stats
+        totalSpentUSD += count * PRICE_PER_BOX;
+        totalBoxOpen += count;
+        updateFinancialDisplay();
+
+        // 3. Efek Loading (Visual Delay)
+        btn.disabled = true;
+        resultDiv.innerHTML = "<h2>Opening boxes... Good Luck! 🍀</h2>";
+
+        setTimeout(() => {
+            const results = {};
+            for (let i = 0; i < count; i++) {
                 const item = getRandomItem();
                 results[item] = (results[item] || 0) + 1;
-              }
+            }
 
-              // Urutkan hasil: Jackpot di paling atas
-              const sortedEntries = Object.entries(results).sort((a, b) => {
+            // 4. Urutkan hasil: Jackpot di paling atas (Mythic & Tear)
+            const sortedEntries = Object.entries(results).sort((a, b) => {
                 const aIsJackpot = a[0].includes("Mythic") || a[0].includes("Tear");
                 const bIsJackpot = b[0].includes("Mythic") || b[0].includes("Tear");
                 return bIsJackpot - aIsJackpot;
-              });
+            });
 
-              let html = `<h2>Results (${count} Box)</h2><div class="gacha-grid">`;
+            // 5. Render Hasil ke Grid
+            let html = `<h2>Results (${count} Box)</h2><div class="gacha-grid">`;
 
-              for (const [item, qty] of sortedEntries) {
+            for (const [item, qty] of sortedEntries) {
                 const isJackpot = item.includes("Mythic") || item.includes("Tear");
                 const icon = itemIcons[item] || "golden-chest.png";
 
                 html += `
-                  <div class="gacha-item ${isJackpot ? 'jackpot' : ''}">
-                    <img src="icons/${icon}" class="gacha-icon" onerror="this.src='icons/golden-chest.png'"/>
-                    <div class="gacha-qty">x${qty}</div>
-                    <div class="gacha-name">${item}</div>
-                  </div>
+                    <div class="gacha-item ${isJackpot ? 'jackpot' : ''}">
+                        <img src="icons/${icon}" class="gacha-icon" onerror="this.src='icons/golden-chest.png'"/>
+                        <div class="gacha-qty">x${qty}</div>
+                        <div class="gacha-name">${item}</div>
+                    </div>
                 `;
-              }
-
-              html += `</div>`;
-              resultDiv.innerHTML = html;
-              btn.disabled = false;
-            }, 500); // Delay 0.5 detik
             }
+
+            html += `</div>`;
+            resultDiv.innerHTML = html;
+            btn.disabled = false;
+        }, 500);
+    }
 
     const itemIcons = {
       "Mythic Costume Selection Box (All-in-one)": "mythic-all-in-one.png",
@@ -336,8 +413,10 @@
       "Pet Pickup Summon Ticket x2": "pet-ticket.png",
       "Costume Pickup Summon Ticket x2": "costume-ticket.png",
     };
+
+
+
   </script>
 
 </body>
 </html>
-
