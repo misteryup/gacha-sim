@@ -225,24 +225,33 @@
             { name: "Hero Combo EXP Scroll x10", chance: 6.00 },
             { name: "Hero Couple EXP Bottle x10", chance: 6.00 },
             // Sisa persentase (±20%) dialokasikan ke item yang paling sering muncul
-            { name: "Pet Pickup Summon Ticket x2", chance: 10.15 },
-            { name: "Costume Pickup Summon Ticket x2", chance: 10.15 },
+            { name: "Pet Pickup Summon Ticket x2", chance: 11.15 },
+            { name: "Costume Pickup Summon Ticket x2", chance: 11.15 },
             ];
 
-            function getRandomItem() {
-            // Gunakan presisi hingga 2 angka di belakang koma (0.01 - 100.00)
-            // Ini lebih akurat untuk rate kecil seperti 0.05
-            const rand = Math.floor(Math.random() * 10000) + 1;
-
-            let cumulative = 0;
-            for (const item of items) {
-              // Kita kalikan chance dengan 100 agar sesuai dengan rand (1-10000)
-              cumulative += Math.round(item.chance * 100);
-              if (rand <= cumulative) {
-                return item.name;
-              }
+            // Helper untuk mendapatkan angka acak 32-bit yang sangat presisi
+            function getSecureRandom() {
+              const array = new Uint32Array(1);
+              window.crypto.getRandomValues(array);
+              // Mengonversi angka 32-bit (0 sampai 4,294,967,295)
+              // menjadi float antara 0 dan 100
+              return (array[0] / 0xFFFFFFFF) * 100;
             }
-            return items[items.length - 1].name;
+
+            function getRandomItem() {
+              const rand = getSecureRandom();
+              let cumulative = 0;
+
+              for (const item of items) {
+                // Gunakan pembulatan presisi tinggi untuk menjaga akurasi rate official
+                cumulative = parseFloat((cumulative + item.chance).toFixed(4));
+
+                if (rand <= cumulative) {
+                  return item.name;
+                }
+              }
+              // Fallback ke item terakhir (biasanya item sampah dengan rate terbesar)
+              return items[items.length - 1].name;
             }
 
             function openBoxes() {
