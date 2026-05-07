@@ -266,15 +266,19 @@
 
     function getRandomItem() {
 
-      const rand = Math.random() * 100;
+      const MAX_RANGE = 10000000000;
+
+      const rand = Math.floor(
+        Math.random() * MAX_RANGE
+      );
 
       let cumulative = 0;
 
       for (const item of items) {
 
-        cumulative += item.chance;
+        cumulative += item.chance * (MAX_RANGE / 100);
 
-        if (rand <= cumulative) {
+        if (rand < cumulative) {
           return item.name;
         }
       }
