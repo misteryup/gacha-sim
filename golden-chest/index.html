@@ -201,33 +201,97 @@
   </div>
 
   <script>
+            const items = [
+            { name: "Mythic Costume Selection Box (All-in-one)", chance: 0.05 }, // Sangat Langka
+            { name: "Mythic Costume Selection Box (Separate)", chance: 0.30 },
+            { name: "Tear of Galadriel", chance: 0.35 },
+            { name: "Heart of a Large Pet x2", chance: 1.00 },
+            { name: "Heart of a Large Pet x1", chance: 2.00 },
+            { name: "Heart of a Small Pet x10", chance: 4.00 },
+            { name: "Heroic Baby Food x30", chance: 5.00 },
+            { name: "Equipment Destruction Protection Crystal x2", chance: 3.00 },
+            { name: "Costume Destruction Protection Crystal x1", chance: 3.00 },
+            { name: "Accessory Destruction Protection Crystal x1", chance: 3.00 },
+            { name: "Ooparts Destruction Protection Crystal x1", chance: 3.00 },
+            { name: "Equipment Level Protection Crystal x50", chance: 5.00 },
+            { name: "Costume Level Protection Crystal x25", chance: 5.00 },
+            { name: "Accessory Level Protection Crystal x25", chance: 5.00 },
+            { name: "Ooparts Level Protection Crystal x25", chance: 5.00 },
+            { name: "Appraise Option Lock x4", chance: 2.00 },
+            { name: "Appraise Option Lock x2", chance: 5.00 },
+            { name: "Appraise Ticket x12", chance: 2.00 },
+            { name: "Appraise Ticket x6", chance: 5.00 },
+            { name: "Hero Guarder EXP Scroll x10", chance: 6.00 },
+            { name: "Hero Combo EXP Scroll x10", chance: 6.00 },
+            { name: "Hero Couple EXP Bottle x10", chance: 6.00 },
+            // Sisa persentase (±20%) dialokasikan ke item yang paling sering muncul
+            { name: "Pet Pickup Summon Ticket x2", chance: 10.15 },
+            { name: "Costume Pickup Summon Ticket x2", chance: 10.15 },
+            ];
 
-    const items = [
-      { name: "Mythic Costume Selection Box (All-in-one)", chance: 0.05 },
-      { name: "Mythic Costume Selection Box (Separate)", chance: 0.30 },
-      { name: "Tear of Galadriel", chance: 0.35 },
-      { name: "Heart of a Large Pet x2", chance: 1.00 },
-      { name: "Heart of a Large Pet x1", chance: 2.00 },
-      { name: "Heart of a Small Pet x10", chance: 5.00 },
-      { name: "Heroic Baby Food x30", chance: 5.00 },
-      { name: "Equipment Destruction Protection Crystal x2", chance: 3.00 },
-      { name: "Costume Destruction Protection Crystal x1", chance: 3.00 },
-      { name: "Accessory Destruction Protection Crystal x1", chance: 3.00 },
-      { name: "Ooparts Destruction Protection Crystal x1", chance: 3.00 },
-      { name: "Equipment Level Protection Crystal x50", chance: 5.00 },
-      { name: "Costume Level Protection Crystal x25", chance: 5.00 },
-      { name: "Accessory Level Protection Crystal x25", chance: 5.00 },
-      { name: "Ooparts Level Protection Crystal x25", chance: 5.00 },
-      { name: "Appraise Option Lock x4", chance: 2.00 },
-      { name: "Appraise Option Lock x2", chance: 5.00 },
-      { name: "Appraise Ticket x12", chance: 2.00 },
-      { name: "Appraise Ticket x6", chance: 5.00 },
-      { name: "Hero Guarder EXP Scroll x10", chance: 6.00 },
-      { name: "Hero Combo EXP Scroll x10", chance: 6.00 },
-      { name: "Hero Couple EXP Bottle x10", chance: 6.00 },
-      { name: "Pet Pickup Summon Ticket x2", chance: 11.15 },
-      { name: "Costume Pickup Summon Ticket x2", chance: 11.15 },
-    ];
+            function getRandomItem() {
+            // Gunakan presisi hingga 2 angka di belakang koma (0.01 - 100.00)
+            // Ini lebih akurat untuk rate kecil seperti 0.05
+            const rand = Math.floor(Math.random() * 10000) + 1;
+
+            let cumulative = 0;
+            for (const item of items) {
+              // Kita kalikan chance dengan 100 agar sesuai dengan rand (1-10000)
+              cumulative += Math.round(item.chance * 100);
+              if (rand <= cumulative) {
+                return item.name;
+              }
+            }
+            return items[items.length - 1].name;
+            }
+
+            function openBoxes() {
+            const btn = document.querySelector('.open-btn');
+            const resultDiv = document.getElementById("result");
+            const count = parseInt(document.getElementById("boxCount").value);
+
+            // Validasi input
+            if (isNaN(count) || count <= 0) return alert("Masukkan jumlah box!");
+            if (count > 1000) return alert("Maksimal 1000 sekali buka agar tidak lag.");
+
+            // Efek Loading agar terasa lebih "berat"
+            btn.disabled = true;
+            resultDiv.innerHTML = "<h2>Opening boxes... Good Luck! 🍀</h2>";
+
+            setTimeout(() => {
+              const results = {};
+              for (let i = 0; i < count; i++) {
+                const item = getRandomItem();
+                results[item] = (results[item] || 0) + 1;
+              }
+
+              // Urutkan hasil: Jackpot di paling atas
+              const sortedEntries = Object.entries(results).sort((a, b) => {
+                const aIsJackpot = a[0].includes("Mythic") || a[0].includes("Tear");
+                const bIsJackpot = b[0].includes("Mythic") || b[0].includes("Tear");
+                return bIsJackpot - aIsJackpot;
+              });
+
+              let html = `<h2>Results (${count} Box)</h2><div class="gacha-grid">`;
+
+              for (const [item, qty] of sortedEntries) {
+                const isJackpot = item.includes("Mythic") || item.includes("Tear");
+                const icon = itemIcons[item] || "golden-chest.png";
+
+                html += `
+                  <div class="gacha-item ${isJackpot ? 'jackpot' : ''}">
+                    <img src="icons/${icon}" class="gacha-icon" onerror="this.src='icons/golden-chest.png'"/>
+                    <div class="gacha-qty">x${qty}</div>
+                    <div class="gacha-name">${item}</div>
+                  </div>
+                `;
+              }
+
+              html += `</div>`;
+              resultDiv.innerHTML = html;
+              btn.disabled = false;
+            }, 500); // Delay 0.5 detik
+            }
 
     const itemIcons = {
       "Mythic Costume Selection Box (All-in-one)": "mythic-all-in-one.png",
@@ -263,80 +327,8 @@
       "Pet Pickup Summon Ticket x2": "pet-ticket.png",
       "Costume Pickup Summon Ticket x2": "costume-ticket.png",
     };
-
-     function getRandomItem() {
-
-      const rand = Math.random() * 100;
-
-      let cumulative = 0;
-
-      for (const item of items) {
-
-        cumulative += item.chance;
-
-        if (rand <= cumulative) {
-          return item.name;
-        }
-      }
-
-      return items[items.length - 1].name;
-    }
-
-    function openBoxes() {
-
-      const count = parseInt(
-        document.getElementById("boxCount").value
-      );
-
-      const results = {};
-
-      for (let i = 0; i < count; i++) {
-
-        const item = getRandomItem();
-
-        results[item] = (results[item] || 0) + 1;
-      }
-
-      let html = `
-        <h2>Results (${count} Box)</h2>
-        <div class="gacha-grid">
-      `;
-
-      for (const [item, qty] of Object.entries(results)) {
-
-        const isJackpot =
-          item.includes("Mythic") ||
-          item.includes("Tear");
-
-        const icon =
-          itemIcons[item] || "golden-chest.png";
-
-        html += `
-          <div class="gacha-item ${isJackpot ? 'jackpot' : ''}">
-
-            <img
-              src="icons/${icon}"
-              class="gacha-icon"
-            />
-
-            <div class="gacha-qty">
-              x${qty}
-            </div>
-
-            <div class="gacha-name">
-              ${item}
-            </div>
-
-          </div>
-        `;
-      }
-
-      html += `</div>`;
-
-      document.getElementById("result").innerHTML = html;
-    }
-
   </script>
 
 </body>
 </html>
+
